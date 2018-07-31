@@ -18,13 +18,10 @@ I do use CMake build system:
 
 ## Run
 
-You have to use DVB apps' \*zap utilities to set up your DVB receiver. Before that, use 'scan' utility to generate a channels list file.
+This fork uses MuMuDVB channel list instead of ZAP channels.conf file
 
-For instance:
-
-<code>tzap -F -c ~/channels.conf "公共電視 PTS"</code>
-
-Then you can run EPGrab's executable file 'epgrab' to grab DVB EPG data.
+* Download channel_list.json from MuMuDVB web service
+* Run epgrab with channel_list.json in current folder
 
 ## License
 

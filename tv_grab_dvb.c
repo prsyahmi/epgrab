@@ -48,7 +48,7 @@ const char *id = "@(#) $Id: tv_grab_dvb.c 86 2010-10-29 20:27:31Z pmhahn $";
 #include "tv_grab_dvb.h"
 
 /* FIXME: put these as options */
-#define CHANNELS_CONF "channels.conf"
+#define CHANNELS_CONF "channels_list.json"
 #define CHANIDENTS    "chanidents"
 
 static char *ProgName;
@@ -803,34 +803,47 @@ static int openInput(void) {
 
 /* Read [cst]zap channels.conf file and print as XMLTV channel info. {{{ */
 static void readZapInfo() {
-  FILE *fd_zap;
-  char buf[256];
-  if ((fd_zap = fopen(CHANNELS_CONF, "r")) == NULL) {
-    fprintf(stderr, "No [cst]zap channels.conf to produce channel info\n");
-    return;
-  }
+	FILE *fd_zap;
+	char buf[256];
+	if ((fd_zap = fopen(CHANNELS_CONF, "r")) == NULL) {
+		fprintf(stderr, "No [cst]zap channels.conf to produce channel info\n");
+		return;
+	}
 
-  /* name:freq:inversion:symbol_rate:fec:quant:vid:aid:chanid:... */
-  while (fgets(buf, sizeof(buf), fd_zap)) {
-    int i = 0;
-    char *c, *id = NULL;
-    for (c = buf; *c; c++)
-      if (*c == ':') {
-        *c = '\0';
-        if (++i == 8) /* chanid */
-          id = c + 1;
-      }
-    if (id && *id) {
-      int chanid = atoi(id);
-      if (chanid) { 
-        printf("<channel id=\"%s\">\n", get_channelident(chanid));
-        printf("\t<display-name>%s</display-name>\n", xmlify(buf, sizeof(c)));
-        printf("</channel>\n");
-      }
-    }
-  }
+	/* name:freq:inversion:symbol_rate:fec:quant:vid:aid:chanid:... */
+	int chanid = 0;
+	while (fgets(buf, sizeof(buf), fd_zap)) {
+		char *c;
+		char *name = NULL;
+		int namelen = 0;
 
-  fclose(fd_zap);
+		for (c = buf; *c; c++)
+			if (memcmp(c, "\"lcn\": ", 7) == 0) {
+				chanid = atoi(c + 7);
+				break;
+			}
+
+		for (c = buf; *c; c++) {
+			if (memcmp(c, "\"name\": ", 8) == 0) {
+				c += 9;
+				name = c;
+				namelen = 0;
+			}
+
+			if (name) namelen++;
+
+			if (name && *c == '\"') {
+				*c = 0;
+				if (chanid && name && namelen) {
+					printf("<channel id=\"%d\">\n", chanid);
+					printf("\t<display-name>%s</display-name>\n", xmlify(name, namelen));
+					printf("</channel>\n");
+				}
+			}
+		}
+	}
+
+	fclose(fd_zap);
 } /*}}}*/
 
 /* Main function. {{{ */
