@@ -835,7 +835,7 @@ static void readZapInfo() {
 			if (name && *c == '\"') {
 				*c = 0;
 				if (chanid && name && namelen) {
-					printf("<channel id=\"%d\">\n", chanid);
+					printf("<channel id=\"%d\">\n", get_channelident(chanid));
 					printf("\t<display-name>%s</display-name>\n", xmlify(name, namelen));
 					printf("</channel>\n");
 				}
